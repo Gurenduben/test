@@ -1,0 +1,32 @@
+func findBtcWifPage(wifString string, keysPerPage int) string {
+	wif, err := btcutil.DecodeWIF(wifString)
+
+	if err != nil {
+		return "Error: could not decode WIF"
+	}
+
+	stringInt := fmt.Sprintf("%d", keysPerPage)
+
+	page, _ := new(big.Int).DivMod(new(big.Int).SetBytes(wif.PrivKey.D.Bytes()), makeBigInt(stringInt), makeBigInt(stringInt))
+
+	page.Add(page, one)
+
+	return page.String()
+}
+
+func findBtcAddressPage(address string, keysPerPage int) string {
+	pageNumber := 1
+	for {
+		keys := generateBitcoinKeys(fmt.Sprintf("%d", pageNumber), keysPerPage)
+		for _, key := range keys {
+			if key.compressed == address || key.uncompressed == address {
+				return fmt.Sprintf("%d", pageNumber)
+			}
+		}
+		pageNumber++
+		if len(keys) < keysPerPage {
+			break
+		}
+	}
+	return "Address not found"
+}
